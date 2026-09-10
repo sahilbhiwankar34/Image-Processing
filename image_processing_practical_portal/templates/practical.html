@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Practical {{number}} · IP Lab</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <a href="/" class="back">
+        ← Practicals
+    </a>
+
+    <div class="brand">
+        IP<span>Lab</span>
+    </div>
+
+</header>
+
+
+<main class="workspace">
+
+    <!-- =========================================
+         PRACTICAL TITLE
+    ========================================== -->
+
+    <section class="title-block">
+
+        <p class="eyebrow">
+            PRACTICAL {{ "%02d"|format(number) }}
+        </p>
+
+        <h1>
+            {{ title }}
+        </h1>
+
+    </section>
+
+
+    <!-- =========================================
+         INPUT / OPERATION PANEL
+    ========================================== -->
+
+    <section class="panel">
+
+        <div class="controls">
+
+
+            <!-- =====================================
+                 MAIN INPUT IMAGE
+            ====================================== -->
+
+            <label class="upload">
+
+                <span>
+                    Input Image
+                </span>
+
+                <input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                >
+
+                <strong id="file-name">
+                    Choose image
+                </strong>
+
+            </label>
+
+
+            <!-- =====================================
+                 PRACTICAL 01
+                 SECOND IMAGE
+            ====================================== -->
+
+            {% if number == 1 %}
+
+            <label class="upload">
+
+                <span>
+                    Second Image
+                </span>
+
+                <input
+                    id="image2"
+                    type="file"
+                    accept="image/*"
+                >
+
+                <strong id="file-name-2">
+                    Choose second image
+                </strong>
+
+            </label>
+
+
+            <!-- =====================================
+                 PRACTICAL 05
+                 INPAINTING MASK
+            ====================================== -->
+
+            {% elif number == 5 %}
+
+            <label class="upload">
+
+                <span>
+                    Inpainting Mask
+                </span>
+
+                <input
+                    id="mask"
+                    type="file"
+                    accept="image/*"
+                >
+
+                <strong id="mask-name">
+                    Choose mask
+                </strong>
+
+            </label>
+
+
+            <!-- =====================================
+                 PRACTICAL 08
+                 TEMPLATE IMAGE
+            ====================================== -->
+
+            {% elif number == 8 %}
+
+            <label class="upload">
+
+                <span>
+                    Template Image
+                </span>
+
+                <input
+                    id="template"
+                    type="file"
+                    accept="image/*"
+                >
+
+                <strong id="template-name">
+                    Choose template
+                </strong>
+
+            </label>
+
+            {% endif %}
+
+
+            <!-- =====================================
+                 OPERATION DROPDOWN
+            ====================================== -->
+
+            <div class="field">
+
+                <label for="operation">
+                    Operation
+                </label>
+
+                <select id="operation"></select>
+
+            </div>
+
+
+            <!-- =====================================
+                 EXTRA INPUT FIELDS
+            ====================================== -->
+
+            <div id="extra-fields"></div>
+
+
+            <!-- =====================================
+                 PROCESS BUTTON
+            ====================================== -->
+
+            <button
+                id="process"
+                class="button"
+            >
+                Process Image
+            </button>
+
+
+            <p
+                id="status"
+                class="status"
+            ></p>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================
+         INPUT AND OUTPUT
+    ========================================== -->
+
+    <section class="results">
+
+
+        <!-- INPUT -->
+
+        <div class="image-card">
+
+            <div class="result-title">
+                INPUT IMAGE
+            </div>
+
+            <div class="image-wrap">
+
+                <img
+                    id="input-preview"
+                    alt="Input preview"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- OUTPUT -->
+
+        <div class="image-card">
+
+            <div class="result-title">
+                OUTPUT IMAGE
+            </div>
+
+            <div class="image-wrap">
+
+                <img
+                    id="output-preview"
+                    alt="Output preview"
+                >
+
+            </div>
+
+        </div>
+
+
+    </section>
+
+
+    <!-- =========================================
+         EXTRA RESULT
+    ========================================== -->
+
+    <div
+        id="extra-result"
+        class="info-card"
+    ></div>
+
+
+</main>
+
+
+<script>
+
+/* =================================================
+   CURRENT PRACTICAL NUMBER
+================================================= */
+
+const practical = {{ number }};
+
+
+/* =================================================
+   HTML ELEMENTS
+================================================= */
+
+const operation =
+    document.getElementById("operation");
+
+const extraFields =
+    document.getElementById("extra-fields");
+
+const statusEl =
+    document.getElementById("status");
+
+const imageInput =
+    document.getElementById("image");
+
+
+/* =================================================
+   PRACTICAL OPERATIONS
+
+   IMPORTANT:
+   Website numbering:
+   
+   01 = Teacher Practical 02
+   02 = Teacher Practical 03
+   03 = Teacher Practical 04
+   ...
+   11 = Teacher Practical 12
+================================================= */
+
+const ops = {
+
+
+    /* =========================================
+       PRACTICAL 01
+       Teacher Practical 02
+       RGB / GRAYSCALE / ARITHMETIC / BITWISE
+    ========================================== */
+
+    1: [
+
+        ["grayscale", "Grayscale"],
+
+        ["rgb", "RGB"],
+
+        ["add", "Image Addition"],
+
+        ["subtract", "Image Subtraction"],
+
+        ["bitwise_not", "Bitwise NOT"],
+
+        ["and", "Bitwise AND"],
+
+        ["or", "Bitwise OR"],
+
+        ["xor", "Bitwise XOR"]
+
+    ],
+
+
+    /* =========================================
+       PRACTICAL 02
+       Teacher Practical 03
+       GEOMETRIC TRANSFORMATIONS
+    ========================================== */
+
+    2: [
+
+        ["translation", "Translation"],
+
+        ["rotation", "Rotation"],
+
+        ["scaling", "Scaling"],
+
+        ["shearing_x", "X Shearing"],
+
+        ["shearing_y", "Y Shearing"],
+
+        ["reflection", "Reflection"],
+
+        ["cropping", "Cropping"]
+
+    ],
+
+
+    /* =========================================
+       PRACTICAL 03
+       Teacher Practical 04
+       IMAGE ENHANCEMENT
+    ========================================== */
+
+    3: [
+
+        [
+            "histogram_equalization",
+            "Histogram Equalization"
+        ],
+
+        ["smoothing", "Smoothing"],
+
+        ["sharpening", "Sharpening"],
+
+        ["threshold", "Thresholding"]
+
+    ],
+
+
+    /* =========================================
+       PRACTICAL 04
+       Teacher Practical 05
+       SPATIAL FILTERS
+    ========================================== */
+
+    4: [
+
+        ["averaging", "Averaging Filter"],
+
+        ["gaussian", "Gaussian Filter"],
+
+        ["median", "Median Filter"],
+
+        ["bilateral", "Bilateral Filter"]
+
+    ],
+
+
+    /* =========================================
+       PRACTICAL 05
+       Teacher Practical 06
+       IMAGE INPAINTING
+    ========================================== */
+
+    5: [
+
+        ["telea", "Telea Method"],
+
+        [
+            "ns",
+            "Navier-Stokes (NS) Method"
+        ]
+
+    ],
+
+
+    /* =========================================
+       PRACTICAL 06
+       Teacher Practical 07
+       LOSSLESS COMPRESSION
+    ========================================== */
+
+    6: [
+
+        [
+            "lossless",
+            "PNG Lossless Compression"
+        ]
+
+    ],
+
+
+    /* =========================================
+       PRACTICAL 07
+       Teacher Practical 08
+       MORPHOLOGICAL OPERATIONS
+    ========================================== */
+
+    7: [
+
+        ["erosion", "Erosion"],
+
+        ["dilation", "Dilation"],
+
+        ["opening", "Opening"],
+
+        ["closing", "Closing"]
+
+    ],
+
+
+    /* =========================================
+       PRACTICAL 08
+       Teacher Practical 09
+       CORRELATION
+    ========================================== */
+
+    8: [
+
+        [
+            "correlation",
+            "Correlation Detection"
+        ]
+
+    ],
+
+
+    /* =========================================
+       PRACTICAL 09
+       Teacher Practical 10
+       TOP-HAT
+    ========================================== */
+
+    9: [
+
+        [
+            "tophat",
+            "Top-Hat Transformation"
+        ]
+
+    ],
+
+
+    /* =========================================
+       PRACTICAL 10
+       Teacher Practical 11
+       COLOUR SPACES
+    ========================================== */
+
+    10: [
+
+        ["rgb", "RGB"],
+
+        ["hsv", "HSV"],
+
+        ["ycrcb", "YCrCb"],
+
+        ["lab", "Lab"]
+
+    ],
+
+
+    /* =========================================
+       PRACTICAL 11
+       Teacher Practical 12
+       EDGE DETECTION
+    ========================================== */
+
+    11: [
+
+        ["canny", "Canny"],
+
+        ["sobel", "Sobel"],
+
+        ["prewitt", "Prewitt"]
+
+    ]
+
+};
+
+
+/* =================================================
+   LOAD OPERATIONS
+================================================= */
+
+function loadOps() {
+
+    operation.innerHTML = "";
+
+    const practicalOperations =
+        ops[practical] || [];
+
+
+    practicalOperations.forEach(
+        function(item) {
+
+            const option =
+                document.createElement("option");
+
+            option.value = item[0];
+
+            option.textContent = item[1];
+
+            operation.appendChild(option);
+
+        }
+    );
+
+
+    renderFields();
+
+}
+
+
+/* =================================================
+   EXTRA FIELDS
+================================================= */
+
+function renderFields() {
+
+    extraFields.innerHTML = "";
+
+    const op = operation.value;
+
+
+    /* =========================================
+       PRACTICAL 02
+       TRANSLATION
+    ========================================== */
+
+    if (
+        practical === 2 &&
+        op === "translation"
+    ) {
+
+        extraFields.innerHTML = `
+
+            <div class="inline">
+
+                <input
+                    id="tx"
+                    type="number"
+                    value="100"
+                    placeholder="X Translation"
+                >
+
+                <input
+                    id="ty"
+                    type="number"
+                    value="50"
+                    placeholder="Y Translation"
+                >
+
+            </div>
+
+        `;
+
+    }
+
+
+    /* =========================================
+       PRACTICAL 02
+       ROTATION / SCALING / SHEARING
+    ========================================== */
+
+    if (
+        practical === 2 &&
+        [
+            "rotation",
+            "scaling",
+            "shearing_x",
+            "shearing_y"
+        ].includes(op)
+    ) {
+
+        let defaultValue = 0.3;
+
+
+        if (op === "rotation") {
+
+            defaultValue = 30;
+
+        }
+
+
+        if (op === "scaling") {
+
+            defaultValue = 1.5;
+
+        }
+
+
+        extraFields.innerHTML = `
+
+            <input
+                id="value"
+                type="number"
+                step="0.1"
+                value="${defaultValue}"
+                placeholder="Enter value"
+            >
+
+        `;
+
+    }
+
+
+    /* =========================================
+       PRACTICAL 03
+       THRESHOLD
+    ========================================== */
+
+    if (
+        practical === 3 &&
+        op === "threshold"
+    ) {
+
+        extraFields.innerHTML = `
+
+            <input
+                id="value"
+                type="number"
+                value="127"
+                min="0"
+                max="255"
+                placeholder="Threshold value"
+            >
+
+        `;
+
+    }
+
+}
+
+
+/* =================================================
+   OPERATION CHANGE
+================================================= */
+
+operation.addEventListener(
+    "change",
+    renderFields
+);
+
+
+/* =================================================
+   INPUT IMAGE PREVIEW
+================================================= */
+
+imageInput.addEventListener(
+    "change",
+    function() {
+
+        const file =
+            imageInput.files[0];
+
+
+        document.getElementById(
+            "file-name"
+        ).textContent =
+            file
+                ? file.name
+                : "Choose image";
+
+
+        if (file) {
+
+            document.getElementById(
+                "input-preview"
+            ).src =
+                URL.createObjectURL(file);
+
+        }
+
+    }
+);
+
+
+/* =================================================
+   SECOND IMAGE NAME
+================================================= */
+
+const image2 =
+    document.getElementById("image2");
+
+
+if (image2) {
+
+    image2.addEventListener(
+        "change",
+        function() {
+
+            const file =
+                image2.files[0];
+
+
+            const name =
+                document.getElementById(
+                    "file-name-2"
+                );
+
+
+            if (name) {
+
+                name.textContent =
+                    file
+                        ? file.name
+                        : "Choose second image";
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =================================================
+   MASK NAME
+================================================= */
+
+const mask =
+    document.getElementById("mask");
+
+
+if (mask) {
+
+    mask.addEventListener(
+        "change",
+        function() {
+
+            const file =
+                mask.files[0];
+
+
+            const name =
+                document.getElementById(
+                    "mask-name"
+                );
+
+
+            if (name) {
+
+                name.textContent =
+                    file
+                        ? file.name
+                        : "Choose mask";
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =================================================
+   TEMPLATE NAME
+================================================= */
+
+const template =
+    document.getElementById("template");
+
+
+if (template) {
+
+    template.addEventListener(
+        "change",
+        function() {
+
+            const file =
+                template.files[0];
+
+
+            const name =
+                document.getElementById(
+                    "template-name"
+                );
+
+
+            if (name) {
+
+                name.textContent =
+                    file
+                        ? file.name
+                        : "Choose template";
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =================================================
+   PROCESS IMAGE
+================================================= */
+
+document.getElementById(
+    "process"
+).addEventListener(
+    "click",
+    async function() {
+
+
+        /* =====================================
+           CHECK MAIN IMAGE
+        ====================================== */
+
+        if (!imageInput.files[0]) {
+
+            statusEl.textContent =
+                "Please select an input image.";
+
+            return;
+
+        }
+
+
+        /* =====================================
+           FORM DATA
+        ====================================== */
+
+        const formData =
+            new FormData();
+
+
+        formData.append(
+            "image",
+            imageInput.files[0]
+        );
+
+
+        formData.append(
+            "operation",
+            operation.value
+        );
+
+
+        /* =====================================
+           SECOND IMAGE
+           PRACTICAL 01
+        ====================================== */
+
+        if (
+            image2 &&
+            image2.files[0]
+        ) {
+
+            formData.append(
+                "image2",
+                image2.files[0]
+            );
+
+        }
+
+
+        /* =====================================
+           MASK
+           PRACTICAL 05
+        ====================================== */
+
+        if (
+            mask &&
+            mask.files[0]
+        ) {
+
+            formData.append(
+                "mask",
+                mask.files[0]
+            );
+
+        }
+
+
+        /* =====================================
+           TEMPLATE
+           PRACTICAL 08
+        ====================================== */
+
+        if (
+            template &&
+            template.files[0]
+        ) {
+
+            formData.append(
+                "template",
+                template.files[0]
+            );
+
+        }
+
+
+        /* =====================================
+           EXTRA PARAMETERS
+        ====================================== */
+
+        const tx =
+            document.getElementById("tx");
+
+        const ty =
+            document.getElementById("ty");
+
+        const value =
+            document.getElementById("value");
+
+
+        if (tx) {
+
+            formData.append(
+                "tx",
+                tx.value
+            );
+
+        }
+
+
+        if (ty) {
+
+            formData.append(
+                "ty",
+                ty.value
+            );
+
+        }
+
+
+        if (value) {
+
+            formData.append(
+                "value",
+                value.value
+            );
+
+        }
+
+
+        /* =====================================
+           STATUS
+        ====================================== */
+
+        statusEl.textContent =
+            "Processing image...";
+
+
+        try {
+
+
+            /* =================================
+               SEND TO FLASK BACKEND
+            ================================= */
+
+            const response =
+                await fetch(
+                    `/process/${practical}`,
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            /* =================================
+               ERROR
+            ================================= */
+
+            if (!response.ok) {
+
+                statusEl.textContent =
+                    data.error ||
+                    "Processing failed.";
+
+                return;
+
+            }
+
+
+            /* =================================
+               SHOW INPUT
+            ================================= */
+
+            document.getElementById(
+                "input-preview"
+            ).src =
+                data.input +
+                "?t=" +
+                Date.now();
+
+
+            /* =================================
+               SHOW OUTPUT
+            ================================= */
+
+            document.getElementById(
+                "output-preview"
+            ).src =
+                data.output +
+                "?t=" +
+                Date.now();
+
+
+            /* =================================
+               EXTRA RESULT
+            ================================= */
+
+            const extra =
+                data.extra || {};
+
+
+            let text = "";
+
+
+            if (
+                extra.correlation_score !==
+                undefined
+            ) {
+
+                text =
+                    `Correlation score:
+                    <b>${extra.correlation_score}</b>`;
+
+            }
+
+
+            if (
+                extra.original_size !==
+                undefined
+            ) {
+
+                text =
+                    `Original:
+                    <b>${extra.original_size} bytes</b>
+                    &nbsp;
+                    Compressed:
+                    <b>${extra.compressed_size} bytes</b>
+                    &nbsp;
+                    Saving:
+                    <b>${extra.saving_percent}%</b>`;
+
+            }
+
+
+            document.getElementById(
+                "extra-result"
+            ).innerHTML = text;
+
+
+            /* =================================
+               SUCCESS
+            ================================= */
+
+            statusEl.textContent =
+                "Processed successfully.";
+
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            statusEl.textContent =
+                "Unable to connect to the backend.";
+
+        }
+
+    }
+);
+
+
+/* =================================================
+   INITIALIZE
+================================================= */
+
+loadOps();
+
+</script>
+
+</body>
+
+</html>
